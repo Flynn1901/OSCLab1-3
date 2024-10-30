@@ -1,7 +1,6 @@
 #define _GNU_SOURCE
 
 
-
 #include "dplist.h"
 
 #include <stdlib.h>

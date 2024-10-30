@@ -31,7 +31,24 @@ dplist_t *dpl_create() {
 }
 
 void dpl_free(dplist_t **list) {
+		dplist_t *target_list = *list;
+		if(target_list==NULL){
+		}
+		else if(target_list->head==NULL){
 
+		}
+		else{
+			dplist_node_t *current_node = target_list->head;
+			dplist_node_t *next_node = NULL;
+			int max_index = dpl_size(target_list);
+			while(max_index--){
+					next_node = current_node->next;
+					free(current_node);
+					current_node = next_node;
+			}
+			free(target_list);
+			*list=NULL;
+		}
     //TODO: add your code here
     //Do extensive testing with valgrind. 
 
@@ -87,44 +104,104 @@ dplist_t *dpl_insert_at_index(dplist_t *list, element_t element, int index) {
 }
 
 dplist_t *dpl_remove_at_index(dplist_t *list, int index) {
-
-    //TODO: add your code here
+	int	max_index = dpl_size(list)-1;
+    if(list==NULL){
+			return NULL;
+	}
+	else if(list->head==NULL){
+			return list;
+	}
+	else if(max_index==0){
+			free(list->head);
+			list->head = NULL;
+			return list;
+	}
+	else if(index<=0){
+			dplist_node_t *next_node = list->head->next;
+			list->head->next->prev = NULL;
+			free(list->head);
+			list->head = next_node;
+			return list;
+	}
+	else if(index>=dpl_size(list)-1){
+			dplist_node_t *last_node = dpl_get_reference_at_index(list,max_index);
+			last_node->prev->next = NULL;
+			free(last_node);
+			return list;
+	}
+	else{
+			dplist_node_t *target_node = dpl_get_reference_at_index(list,index);
+			target_node->prev->next = target_node->next;
+			target_node->next->prev = target_node->prev;
+			free(target_node);
+			return list;
+	}
     return NULL;
 }
 
 int dpl_size(dplist_t *list) {
 	if(list == NULL) return -1;
 
-	int size = 0;
+	dplist_node_t *next_node = (list->head);
+	if(next_node==NULL){return 0;}
+
+	int size = 1;
 	bool whether_last_one = false;
 
-	dplist_node_t *next_node = *(list->head);
-
-	while(whetehr_last_one){
+	while(!whether_last_one){
 			if(next_node->next==NULL){
-					whether_last_one == true;
+					whether_last_one = true;
 			}else{
-					whether_last_one == false;
-					next_node == *(next_node->next);
+					whether_last_one = false;
+					next_node = (next_node->next);
+					size++;
 			}
-	}
-	
-    //TODO: add your code here
-    return -1;
+	}	
+    return size;
 }
 
 dplist_node_t *dpl_get_reference_at_index(dplist_t *list, int index) {
-    //int count = 0 ;
-    dplist_node_t *dummy = NULL;
+	if(list==NULL||list->head==NULL){return NULL;}
 
-    //TODO: add your code here
+	dplist_node_t *dummy = NULL;
+	
+	int max_index = dpl_size(list) - 1;
+	if(index<=0||max_index==0){
+			dummy = list->head;
+	}
+	else if(index>max_index){
+			//printf("Your target index is: %d. The maximum index is %d.\n Exceed the maximum index!\n",index,max_index);
+			dplist_node_t *next_node = list->head;
+			for(int i=0;i<=max_index-1;i++){
+					next_node = next_node->next;
+			}
+			dummy = next_node;
+	}
+	else{
+		dplist_node_t *next_node = list->head;
+
+		for(int j=0;j<=index-1;j++){
+				next_node = next_node->next;
+		}
+		dummy = next_node;
+		printf("%p\n", dummy);
+		printf("%c\n", dummy->element);
+}
     return dummy;
 }
 
-element_t dpl_get_element_at_index(dplist_t *list, int index) {
+void test(dplist_t *list,int index){
+		dplist_node_t *node = dpl_get_reference_at_index(list,index);
+		printf("Current node is:%c",node->element);
+}
 
-    //TODO: add your code here
-    return '\e';
+
+element_t dpl_get_element_at_index(dplist_t *list, int index) {
+		dplist_node_t *target_node = dpl_get_reference_at_index(list,index);
+		if(target_node==NULL){
+				return NULL;
+		}
+		return target_node->element;
 }
 
 int dpl_get_index_of_element(dplist_t *list, element_t element) {
@@ -134,4 +211,25 @@ int dpl_get_index_of_element(dplist_t *list, element_t element) {
 }
 
 
+void showall(dplist_t *list){
+		if(list==NULL){
+				printf("Empty list pointer");
+		}
+		else if(list->head==NULL){
+				printf("Empty list");
+		}
+		else{
+				dplist_node_t *current_node = list->head;
+				while(1){
+						printf("%c\n",current_node->element);
+						if(current_node->next!=NULL){
+								current_node = current_node->next;
+						}
+						else{
+								break;
+						}
+				}
+		}
+}
+						
 

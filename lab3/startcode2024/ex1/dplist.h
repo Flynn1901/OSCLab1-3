@@ -18,6 +18,7 @@ typedef struct dplist dplist_t;
 
 typedef struct dplist_node dplist_node_t;
 
+void showall(dplist_t *list);
 /** Create and allocate memory for a new list
  * \return a pointer to the new list.
  */
@@ -95,4 +96,5 @@ element_t dpl_get_element_at_index(dplist_t *list, int index);
  */
 int dpl_get_index_of_element(dplist_t *list, element_t element);
 
+void test(dplist_t *node, int index);
 #endif  //DPLIST_H
