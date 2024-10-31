@@ -45,7 +45,7 @@ dplist_t *dpl_create(// callback functions
 void dpl_free(dplist_t **list, bool free_element) {
 		int list_size = dpl_size(*list);
 		while(list_size--){
-				dpl_remove_at_index(*list,free_element,true);
+				dpl_remove_at_index(*list,list_size,free_element);
 		}
 		free(*list);
 		*list = NULL;
@@ -55,6 +55,7 @@ dplist_t *dpl_insert_at_index(dplist_t *list, void *element, int index, bool ins
 		dplist_node_t *list_node = malloc(sizeof(dplist_node_t));			
 		if(insert_copy){
 				list_node->element = list->element_copy(element);
+				//void* element1 = list->element_copy(element);
 			}
 		else{
 				list_node->element = element;
@@ -94,6 +95,7 @@ dplist_t *dpl_insert_at_index(dplist_t *list, void *element, int index, bool ins
 				list_node->next = next_node;
 				list_node->prev = prev_node;
 		}
+		return list;
 }
 
 dplist_t *dpl_remove_at_index(dplist_t *list, int index, bool free_element) {
@@ -102,7 +104,7 @@ dplist_t *dpl_remove_at_index(dplist_t *list, int index, bool free_element) {
 		else{
 				int list_size = dpl_size(list);
 				if(index<=0){
-						if(free_element){ list->element_free(list->head->element); }
+						if(free_element){ list->element_free(&(list->head->element)); }
 						else{
 							if(list->head->next!=NULL){
 									dplist_node_t *next_node = list->head->next;
@@ -116,7 +118,7 @@ dplist_t *dpl_remove_at_index(dplist_t *list, int index, bool free_element) {
 				}
 				else if(index>=list_size-1){
 						dplist_node_t *last_node = dpl_get_reference_at_index(list,list_size-1);
-						if(free_element){ list->element_free(last_node->element); }
+						if(free_element){ list->element_free(&last_node->element); }
 						else{
 								if(last_node->prev!=NULL){
 										dplist_node_t *prev_node = last_node->prev;
@@ -132,7 +134,7 @@ dplist_t *dpl_remove_at_index(dplist_t *list, int index, bool free_element) {
 				}
 				else{
 						dplist_node_t *target_node = dpl_get_reference_at_index(list,index);
-						if(free_element){ list->element_free(target_node->element); }
+						if(free_element){ list->element_free(&target_node->element); }
 						else{
 							dplist_node_t *prev_node = target_node->prev;
 							dplist_node_t *next_node = target_node->next;	
@@ -156,6 +158,7 @@ int dpl_size(dplist_t *list) {
 				dplist_node_t *next_node = list->head;
 				while(next_node->next!=NULL){
 						count++;
+						next_node = next_node->next;
 				}
 				return count;
 		}
