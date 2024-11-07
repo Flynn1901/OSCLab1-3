@@ -44,9 +44,6 @@ int main(void) {
     printf("Adding one extra element\n");
     x.id = 5;
     list = dpl_insert_at_index(list, &x, 2, true);
-	
-	x.id = 100;
-	list = dpl_insert_at_index(list,&x,2,false);
 
 
     printf("Removing all elements from the list\n");
