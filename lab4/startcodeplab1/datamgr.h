@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include "config.h"
 #include <assert.h>
+#include "lib/dplist.h"
 
 #ifndef RUN_AVG_LENGTH
 #define RUN_AVG_LENGTH 5
@@ -77,5 +78,7 @@ time_t datamgr_get_last_modified(sensor_id_t sensor_id);
  *  \return the total amount of sensors
  */
 int datamgr_get_total_sensors();
+
+void add_new_data(dplist_t*, sensor_id_t, double, time_t);
 
 #endif  //DATAMGR_H_
