@@ -17,7 +17,7 @@ int insert_sensor(FILE *f, sensor_id_t id, sensor_value_t value, sensor_ts_t ts)
         printf("Error opening file \n");
         return 0;
     }
-    fprintf(f,"%u %f %ld",id, value, ts);
+    fprintf(f,"%u %f %ld\n",id, value, ts);
     return 1;
 }
 
