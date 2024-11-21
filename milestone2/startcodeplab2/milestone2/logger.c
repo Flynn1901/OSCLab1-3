@@ -1,29 +1,40 @@
 #include "logger.h"
-#define SIZE 100
+#define SIZE 50
 
 #define LOG_FILE "gateway.log"
+static int sequency = 0;
+FILE* log_file=NULL;
 
-void write_to_log(const char *message) {
-    FILE *log_file = fopen(LOG_FILE, "a");
-    if (!log_file) {
-        perror("Failed to open log file");
-        return;
-    }
-
-    time_t now = time(NULL);
-    fprintf(log_file, "%s - %s", ctime(&now), message);
-    fclose(log_file);
+int create_log_process(void){
+	log_file = fopen("gateway.log", "a");
+	return 1;
 }
 
-int main() {
-    char buffer[256];
-
-    while (fgets(buffer, sizeof(buffer), stdin)) {
-        if (strcmp(buffer, "EXIT\n") == 0) break; // 收到退出信号
-        printf("%s",buffer);
-        write_to_log(buffer); // 写日志
+int write_to_log_process(char *msg){
+	sequency++;
+	usleep(1000);
+	create_log_process();
+    if (!log_file)
+    {
+	    perror("Failed to open log file");
+    	return 0;
     }
+    time_t now = time(NULL);
+	char time_str[SIZE];
+	snprintf(time_str, SIZE, ctime(&now));
 
-    printf("Logger exited.\n");
-    return 0;
+	int len = strlen(time_str);
+	if (len>0)
+	{
+		time_str[len-1] = '\0';
+	}
+
+    fprintf(log_file, "%d-%s-%s\n", sequency,time_str,msg);
+	end_log_process();
+	return 1;
+}
+
+int end_log_process(void){
+	fclose(log_file);
+	return 0;
 }

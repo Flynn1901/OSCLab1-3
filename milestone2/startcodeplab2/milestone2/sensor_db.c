@@ -6,17 +6,15 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
-#define SIZE 50
+#define SIZE 200
 #define READ_END 0
 #define WRITE_END 1
 
 static pid_t pid;
-static int sequency = 0;
-int fd[2];
+static int fd[2];
 
 FILE* open_db(char *file, bool append) {
     printf("Hello from %s!\n", "SimpleLinuxFork");
-
 
     // 创建管道
     if (pipe(fd) == -1) {
@@ -27,19 +25,30 @@ FILE* open_db(char *file, bool append) {
     // 创建子进程
     pid = fork();
 
-    if (pid < 0) {
+    if (pid < 0)
+    {
         perror("Fork failed");
         exit(1);
     }
-
     if (pid == 0) { // 子进程
-        close(fd[1]); // 关闭写端
-        dup2(fd[0], STDIN_FILENO); // 重定向管道读端到标准输入
-        close(fd[0]); // 关闭重定向后的描述符
-        execl("./logger", "Logger", NULL); // 启动 logger 程序
-        perror("execl failed"); // 如果 execl 失败
-        exit(1);
-    } else { // 父进程
+        close(fd[WRITE_END]); // 关闭写端
+        char buffer[SIZE];
+
+
+        while(read(fd[READ_END],buffer,SIZE))
+        {
+            if (strcmp(buffer, "Data file closed.") == 0) break; // 收到退出信号
+            printf("%s",buffer);
+            write_to_log_process(buffer); // 写日志
+        }
+        printf("%s",buffer);
+        write_to_log_process(buffer);
+        close(fd[READ_END]);
+        return NULL;
+    }
+    else
+    {
+        // 父进程
         char *mode = append ? "a" : "w";
         FILE *db = fopen(file, mode);
         if (db == NULL) {
@@ -48,10 +57,10 @@ FILE* open_db(char *file, bool append) {
         }
 
         // 向 Logger 发送日志
-        char message[256];
-        snprintf(message, sizeof(message), "Opened file: %s\n", file);
-        write(fd[WRITE_END], message, strlen(message));
-
+        char message1[SIZE];
+        snprintf(message1, SIZE, "Data file opened.");
+        write(fd[WRITE_END], message1, strlen(message1)+1);
+        usleep(1000);
         return db;
     }
 }
@@ -60,13 +69,14 @@ int insert_sensor(FILE *f, sensor_id_t id, sensor_value_t value, sensor_ts_t ts)
     if (f == NULL) return -1;
 
     // 写入数据到文件
-    fprintf(f, "%s\n", "test");
+    fprintf(f, "%d, %f, %ld\n", id,value,ts);
     fflush(f);
 
     // 发送日志消息到 Logger
-    char message[256];
-    snprintf(message, sizeof(message), "Inserted data: %s\n", "Close to answer");
-    write(fd[WRITE_END], message, strlen(message));
+    char message2[SIZE];
+    snprintf(message2, SIZE, "Data inserted.");
+    write(fd[WRITE_END], message2, strlen(message2)+1);
+    usleep(1000);
     return 0;
 }
 
@@ -74,7 +84,10 @@ int close_db(FILE *f){
     if (f) fclose(f);
 
     // 发送退出消息给 Logger
-    write(fd[WRITE_END], "EXIT\n", 5);
+    char message3[SIZE];
+    snprintf(message3, SIZE, "Data file closed.");
+    write(fd[WRITE_END], message3, strlen(message3)+1);
+    usleep(1000);
     close(fd[WRITE_END]); // 关闭管道写端
     waitpid(pid, NULL, 0); // 等待子进程结束
     return 0;
