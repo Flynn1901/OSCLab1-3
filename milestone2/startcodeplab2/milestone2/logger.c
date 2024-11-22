@@ -1,5 +1,5 @@
 #include "logger.h"
-#define SIZE 50
+#define SIZE 200
 
 #define LOG_FILE "gateway.log"
 static int sequency = 0;
@@ -10,9 +10,14 @@ int create_log_process(void){
 	return 1;
 }
 
+
+
 int write_to_log_process(char *msg){
-	sequency++;
-	usleep(1000);
+	for (int i=0; i<SIZE; i++)
+	{
+		printf("%c", msg[i]);
+	}
+	printf("\n");
 	create_log_process();
     if (!log_file)
     {
@@ -21,7 +26,7 @@ int write_to_log_process(char *msg){
     }
     time_t now = time(NULL);
 	char time_str[SIZE];
-	snprintf(time_str, SIZE, ctime(&now));
+	snprintf(time_str, SIZE, "%s",ctime(&now));
 
 	int len = strlen(time_str);
 	if (len>0)
@@ -29,7 +34,12 @@ int write_to_log_process(char *msg){
 		time_str[len-1] = '\0';
 	}
 
-    fprintf(log_file, "%d-%s-%s\n", sequency,time_str,msg);
+	while (*msg != '\0') {
+		size_t length = strlen(msg);
+		fprintf(log_file, "%d - %s - %.*s\n", sequency++, time_str, (int)length+1, msg);
+		fflush(log_file);
+		msg += length + 1;
+	}
 	end_log_process();
 	return 1;
 }
