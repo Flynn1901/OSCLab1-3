@@ -12,7 +12,6 @@
 
 static pid_t pid;
 static int fd[2];
-int count;
 
 FILE* open_db(char *file, bool append)
 {
@@ -43,7 +42,7 @@ FILE* open_db(char *file, bool append)
             memset(buffer, 0, SIZE);
         }
         close(fd[READ_END]);
-        return NULL;
+        exit(0);
     }
     else
     {
@@ -80,10 +79,13 @@ int close_db(FILE *f){
     if (f) fclose(f);
 
     // 发送退出消息给 Logger
-    char message3[SIZE];
-    snprintf(message3, SIZE, "Data file closed.");
-    write(fd[WRITE_END], message3, strlen(message3)+1);
-    close(fd[WRITE_END]); // 关闭管道写端
-    waitpid(pid, NULL, 0); // 等待子进程结束
+    if (pid > 0)
+    {
+        char message3[SIZE];
+        snprintf(message3, SIZE, "Data file closed.");
+        write(fd[WRITE_END], message3, strlen(message3)+1);
+        close(fd[WRITE_END]); // 关闭管道写端
+    }
+    waitpid(pid, NULL, 0);
     return 0;
 }
