@@ -10,6 +10,7 @@
 #define SBUFFER_SIZE 16
 #define MAX_TNUM 3
 sbuffer_t *sbuffer;
+int read_or_not = 0;
 
 void reader_thread(void* arg)
 {
@@ -26,7 +27,11 @@ void reader_thread(void* arg)
 
     do
     {
+        while (read_or_not==1){}
+
+        read_or_not = 1;
         sbuffer_remove(sbuffer, sensor_data);
+        read_or_not=0;
         fprintf(file, "%d %f %ld\n",sensor_data->id,sensor_data->value, sensor_data->ts);
         printf("Reading sensor data %d %f %ld \n",sensor_data->id,sensor_data->value,sensor_data->ts);
         usleep(2500);
