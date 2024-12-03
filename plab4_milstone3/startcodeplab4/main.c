@@ -11,10 +11,13 @@
 #define MAX_TNUM 3
 sbuffer_t *sbuffer;
 int read_or_not = 0;
+int read_complete = 0;
+int write_complete = 0;
 
-void reader_thread(void* arg)
+void *reader_thread(void* arg)
 {
-    usleep(2500);
+    printf("One thread start.\n");
+    usleep(20000);
     FILE *file = fopen("sensor_data_out.csv","a");
 
     if(file == NULL)
@@ -27,18 +30,25 @@ void reader_thread(void* arg)
 
     do
     {
+        if (write_complete == 1&&read_complete==1) { printf("One thread closes.\n"); return NULL; };
         while (read_or_not==1){}
-
+        while (read_or_not==1){}
         read_or_not = 1;
         sbuffer_remove(sbuffer, sensor_data);
         read_or_not=0;
+
         fprintf(file, "%d %f %ld\n",sensor_data->id,sensor_data->value, sensor_data->ts);
         printf("Reading sensor data %d %f %ld \n",sensor_data->id,sensor_data->value,sensor_data->ts);
-        usleep(2500);
+        usleep(25000);
+
     }while (sensor_data->id != 0);
+    read_complete = 1;
+    fclose(file);
+    printf("One thread closes.\n");
+    return NULL;
 }
 
-void writer_thread(void* arg)
+void *writer_thread(void* arg)
 {
     FILE *fp_sensor_data = fopen("sensor_data", "rb");
     if (fp_sensor_data == NULL) {   printf("Error opening file\n"); exit(-1); }
@@ -89,13 +99,16 @@ void writer_thread(void* arg)
 
         if(counter==0)
         {
-            printf("New data is : %d, %f, %ld \n",sensor_id_new,temperature,timestamp);
+            // printf("New data is : %d, %f, %ld \n",sensor_id_new,temperature,timestamp);
             new_data->id = sensor_id_new;
             new_data->ts = timestamp;
             new_data->value = temperature;
 
+            while (read_or_not==1){}
+            read_or_not=1;
             printf("Insert data: %s \n",!sbuffer_insert(sbuffer,new_data)? "Success":"Fail");
-            usleep(1000);
+            read_or_not=0;
+            usleep(10000);
         }
 
     }
@@ -108,7 +121,10 @@ void writer_thread(void* arg)
     new_data->ts = timestamp;
     new_data->value = temperature;
     printf("Insert final data: %s \n",!sbuffer_insert(sbuffer,new_data)? "Success":"Fail");
-    printf("End data is: %d",sensor_id_new);
+    // printf("End data is: %d",sensor_id_new);
+    write_complete = 1;
+    fclose(fp_sensor_data);
+    return NULL;
 }
 
 
