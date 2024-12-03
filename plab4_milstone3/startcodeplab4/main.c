@@ -16,11 +16,11 @@ pthread_mutex_t mutex;
 int read_or_not = 0;
 int read_complete = 0;
 int write_complete = 0;
+FILE *file;
 
 void *reader_thread(void* arg)
 {
     printf("One thread start.\n");
-    FILE *file = fopen("sensor_data_out.csv","a");
 
     if(file == NULL)
     {
@@ -39,7 +39,6 @@ void *reader_thread(void* arg)
 
         if (read_complete==1)
         {
-            fclose(file);
             printf("One thread closes.\n");
             pthread_exit(NULL);
         }
@@ -146,6 +145,7 @@ int main(void)
 
     pthread_t tid[MAX_TNUM];
     pthread_attr_t attr;
+    file = fopen("sensor_data_out.csv","a");
     pthread_attr_init(&attr);
     pthread_mutex_init(&mutex,NULL);
 
