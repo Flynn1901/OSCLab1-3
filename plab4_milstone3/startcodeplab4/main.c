@@ -9,7 +9,10 @@
 #define ERROR (-1)
 #define SBUFFER_SIZE 16
 #define MAX_TNUM 3
+
 sbuffer_t *sbuffer;
+pthread_mutex_t mutex;
+
 int read_or_not = 0;
 int read_complete = 0;
 int write_complete = 0;
@@ -17,7 +20,6 @@ int write_complete = 0;
 void *reader_thread(void* arg)
 {
     printf("One thread start.\n");
-    usleep(20000);
     FILE *file = fopen("sensor_data_out.csv","a");
 
     if(file == NULL)
@@ -30,22 +32,33 @@ void *reader_thread(void* arg)
 
     do
     {
-        if (write_complete == 1&&read_complete==1) { printf("One thread closes.\n"); return NULL; };
-        while (read_or_not==1){}
-        while (read_or_not==1){}
-        read_or_not = 1;
+
+        pthread_mutex_lock(&mutex);
         sbuffer_remove(sbuffer, sensor_data);
-        read_or_not=0;
+        pthread_mutex_unlock(&mutex);
 
-        fprintf(file, "%d %f %ld\n",sensor_data->id,sensor_data->value, sensor_data->ts);
-        printf("Reading sensor data %d %f %ld \n",sensor_data->id,sensor_data->value,sensor_data->ts);
-        usleep(25000);
+        if (read_complete==1)
+        {
+            fclose(file);
+            printf("One thread closes.\n");
+            pthread_exit(NULL);
+        }
 
-    }while (sensor_data->id != 0);
-    read_complete = 1;
-    fclose(file);
-    printf("One thread closes.\n");
-    return NULL;
+        if ((sensor_data->id==0)&&(write_complete==0)){}
+        else if ((sensor_data->id==0)&&(write_complete==1)){
+            read_complete = 1;
+            fclose(file);
+            printf("One thread closes.\n");
+            sbuffer_free(&sbuffer);
+            pthread_exit(NULL);
+        }
+        else if (sensor_data->id!=0)
+        {
+            fprintf(file, "%d %f %ld\n",sensor_data->id,sensor_data->value, sensor_data->ts);
+            // printf("Reading sensor data %d %f %ld \n",sensor_data->id,sensor_data->value,sensor_data->ts);
+            usleep(25000);
+        }
+    }while (1);
 }
 
 void *writer_thread(void* arg)
@@ -78,18 +91,12 @@ void *writer_thread(void* arg)
             total_byte+=2;
             break;
         case 1:
-            //read temperature进行
                 bytesRead = fread(&temperature, 8, 1, fp_sensor_data);
-            // 打印读取到的8byte数据
-            // printf("Read temperature is: %f    ",temperature);
             counter = 2;
             total_byte+=8;
             break;
         case 2:
-            //read time stamp
                 bytesRead = fread(&timestamp, 8, 1, fp_sensor_data);
-            // 打印读取到的8byte数据
-            // printf("Read time stamp is: %ld\n", timestamp);
             counter = 0;
             total_byte+=8;
             break;
@@ -99,15 +106,14 @@ void *writer_thread(void* arg)
 
         if(counter==0)
         {
-            // printf("New data is : %d, %f, %ld \n",sensor_id_new,temperature,timestamp);
+            printf("New data is : %d, %f, %ld \n",sensor_id_new,temperature,timestamp);
             new_data->id = sensor_id_new;
             new_data->ts = timestamp;
             new_data->value = temperature;
 
-            while (read_or_not==1){}
-            read_or_not=1;
+            pthread_mutex_lock(&mutex);
             printf("Insert data: %s \n",!sbuffer_insert(sbuffer,new_data)? "Success":"Fail");
-            read_or_not=0;
+            pthread_mutex_unlock(&mutex);
             usleep(10000);
         }
 
@@ -120,11 +126,13 @@ void *writer_thread(void* arg)
     new_data->id = sensor_id_new;
     new_data->ts = timestamp;
     new_data->value = temperature;
+    pthread_mutex_lock(&mutex);
     printf("Insert final data: %s \n",!sbuffer_insert(sbuffer,new_data)? "Success":"Fail");
+    pthread_mutex_unlock(&mutex);
     // printf("End data is: %d",sensor_id_new);
     write_complete = 1;
     fclose(fp_sensor_data);
-    return NULL;
+    pthread_exit(NULL);
 }
 
 
@@ -139,6 +147,7 @@ int main(void)
     pthread_t tid[MAX_TNUM];
     pthread_attr_t attr;
     pthread_attr_init(&attr);
+    pthread_mutex_init(&mutex,NULL);
 
     pthread_create(&tid[0],&attr,writer_thread,NULL);
     pthread_create(&tid[1],&attr,reader_thread,NULL);
