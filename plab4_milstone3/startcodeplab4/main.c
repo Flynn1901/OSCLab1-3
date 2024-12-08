@@ -53,7 +53,7 @@ void *reader_thread(void* arg)
         }
         else if (sensor_data->id!=0)
         {
-            fprintf(file, "%d %f %ld\n",sensor_data->id,sensor_data->value, sensor_data->ts);
+            fprintf(file, "%d, %f, %ld\n",sensor_data->id,sensor_data->value, sensor_data->ts);
             // printf("Reading sensor data %d %f %ld \n",sensor_data->id,sensor_data->value,sensor_data->ts);
             usleep(25000);
         }
