@@ -32,7 +32,6 @@ void *reader_thread(void* arg)
 
     do
     {
-
         pthread_mutex_lock(&mutex);
         sbuffer_remove(sbuffer, sensor_data);
         pthread_mutex_unlock(&mutex);
