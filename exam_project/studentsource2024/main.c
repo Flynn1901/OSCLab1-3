@@ -9,8 +9,6 @@
 #include "lib/tcpsock.h"
 #include "connmgr.h"
 
-
-
 #define ERROR (-1)
 #define SBUFFER_SIZE 16
 
@@ -24,10 +22,12 @@ typedef struct
 {
   int MAX_CONN;
   int PORT;
+  sbuffer_t *sbuffer;
 } connmgrdata;
 
 int MAX_CONN;
 int PORT;
+sbuffer_t *sbuffer;
 extern int conn_counter;
 
 int main(int argc, char *argv[]) {
@@ -36,14 +36,16 @@ int main(int argc, char *argv[]) {
         printf("Please provide the right arguments: first the port, then the max nb of clients");
         return -1;
     }
-
     MAX_CONN = atoi(argv[2]);
     PORT = atoi(argv[1]);
+
+    sbuffer= malloc(SBUFFER_SIZE);
+    printf("%s",!sbuffer_init(&sbuffer)? "OK" : "ERROR");
 
     pthread_t tid[3];
     pthread_attr_t attr;
     pthread_attr_init(&attr);
-    connmgrdata connmgrdata = {MAX_CONN,PORT};
+    connmgrdata connmgrdata = {MAX_CONN,PORT,sbuffer};
 	pthread_create(&tid[0],&attr,run_connmgr,(void*)&connmgrdata);
 
     printf("Wait for thread close: Connection Magnager\n");

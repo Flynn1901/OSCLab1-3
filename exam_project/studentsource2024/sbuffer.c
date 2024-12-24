@@ -9,6 +9,7 @@
 /**
  * basic node for the buffer, these nodes are linked together to create the buffer
  */
+
 typedef struct sbuffer_node {
     struct sbuffer_node *next;  /**< a pointer to the next node*/
     sensor_data_t data;         /**< a structure containing the data */
@@ -45,7 +46,7 @@ int sbuffer_free(sbuffer_t **buffer) {
     return SBUFFER_SUCCESS;
 }
 
-int sbuffer_remove(sbuffer_t *buffer, sensor_data_t *data) {
+int sbuffer_remove(sbuffer_t *buffer, sensor_data_t *data,int source) {
     sbuffer_node_t *dummy;
     if (buffer == NULL) return SBUFFER_FAILURE;
     if (buffer->head == NULL) return SBUFFER_NO_DATA;
@@ -79,3 +80,8 @@ int sbuffer_insert(sbuffer_t *buffer, sensor_data_t *data) {
     }
     return SBUFFER_SUCCESS;
 }
+
+sbuffer_node_t *sbuffer_head(sbuffer_t *buffer) {
+	return buffer->head;
+}
+

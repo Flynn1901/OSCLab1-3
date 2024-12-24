@@ -11,6 +11,7 @@
 #include <pthread.h>
 #include "config.h"
 #include <inttypes.h>
+#include "sbuffer.h"
 
 void *run_connmgr(void*);
 void *read_thread(void*);

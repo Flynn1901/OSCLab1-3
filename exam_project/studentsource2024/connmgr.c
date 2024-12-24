@@ -8,12 +8,14 @@ typedef struct
 {
     tcpsock_t *client;
     tcpsock_t *server;
+    sbuffer_t *sbuffer;
 } threadData;
 
 typedef struct
 {
     int MAX_CONN;
     int PORT;
+    sbuffer_t *sbuffer;
 } connmgrdata;
 
 void *read_thread(void* arg)
@@ -23,12 +25,12 @@ void *read_thread(void* arg)
     threadData* tdata = (threadData*)arg;
     tcpsock_t *client = tdata->client;
     tcpsock_t *server = tdata->server;
+    sbuffer_t *sbuffer = tdata->sbuffer;
     sensor_data_t data;
     int bytes, result;
     do {
         // read sensor ID
         bytes = sizeof(data.id);
-        printf("123");
         result = tcp_receive(client, (void *) &data.id, &bytes);
         // read temperature
         bytes = sizeof(data.value);
@@ -39,6 +41,12 @@ void *read_thread(void* arg)
         if ((result == TCP_NO_ERROR) && bytes) {
             printf("sensor id = %" PRIu16 " - temperature = %g - timestamp = %ld\n", data.id, data.value,
                    (long int) data.ts);
+            sensor_data_t *new_data = (sensor_data_t *)malloc(sizeof(sensor_data_t));
+    		new_data->id = data.id;
+    		new_data->ts = (long int) data.ts;
+    		new_data->value = data.value;
+            new_data->canberemoved = 0;
+    		printf("Insert final data: %s \n",!sbuffer_insert(sbuffer,new_data)? "Success":"Fail");
         }
     } while (result == TCP_NO_ERROR);
     if (result == TCP_CONNECTION_CLOSED)
@@ -54,6 +62,7 @@ void *run_connmgr(void *arg){
     connmgrdata* Data = (connmgrdata*)arg;
     int MAX_CONN = Data->MAX_CONN;
     int PORT = Data->PORT;
+    sbuffer_t *sbuffer = Data->sbuffer;
 
     pthread_t tid[MAX_CONN];
     pthread_attr_t attr;
@@ -63,7 +72,7 @@ void *run_connmgr(void *arg){
     if (tcp_passive_open(&server, PORT) != TCP_NO_ERROR) exit(EXIT_FAILURE);
     do {
         if (tcp_wait_for_connection(server, &client) != TCP_NO_ERROR) exit(EXIT_FAILURE);
-        threadData data = {client,server};
+        threadData data = {client,server,sbuffer};
         pthread_create(&tid[conn_counter],&attr,read_thread,(void*)&data);
         conn_counter++;
     } while (conn_counter < MAX_CONN);

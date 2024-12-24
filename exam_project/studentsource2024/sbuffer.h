@@ -12,6 +12,7 @@
 #define SBUFFER_NO_DATA 1
 
 typedef struct sbuffer sbuffer_t;
+typedef struct sbuffer_node sbuffer_node_t;
 
 /**
  * Allocates and initializes a new shared buffer
@@ -34,7 +35,7 @@ int sbuffer_free(sbuffer_t **buffer);
  * \param data a pointer to pre-allocated sensor_data_t space, the data will be copied into this structure. No new memory is allocated for 'data' in this function.
  * \return SBUFFER_SUCCESS on success and SBUFFER_FAILURE if an error occurred
  */
-int sbuffer_remove(sbuffer_t *buffer, sensor_data_t *data);
+int sbuffer_remove(sbuffer_t *buffer, sensor_data_t *data,int source);
 
 /**
  * Inserts the sensor data in 'data' at the end of 'buffer' (at the 'tail')
@@ -43,5 +44,7 @@ int sbuffer_remove(sbuffer_t *buffer, sensor_data_t *data);
  * \return SBUFFER_SUCCESS on success and SBUFFER_FAILURE if an error occured
 */
 int sbuffer_insert(sbuffer_t *buffer, sensor_data_t *data);
+
+sbuffer_node_t *sbuffer_head(sbuffer_t *buffer);
 
 #endif  //_SBUFFER_H_

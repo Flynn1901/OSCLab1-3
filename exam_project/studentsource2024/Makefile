@@ -3,8 +3,8 @@ NO_COLOR = \033[0m
 
 
 runnew: main.c sbuffer.c
-	gcc -W main.c sbuffer.c lib/tcpsock.c connmgr.c -o a.out
-	./a.out 5678 1
+	gcc -W -g main.c sbuffer.c lib/tcpsock.c connmgr.c -o a.out
+
 # when executing make, compile all exe's
 all: sensor_gateway sensor_node file_creator
 
