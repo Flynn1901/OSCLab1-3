@@ -4,6 +4,7 @@
 #include "connmgr.h"
 int conn_counter = 0;
 extern int complete_transfer;
+extern pthread_mutex_t mutex;
 
 typedef struct
 {
@@ -17,6 +18,7 @@ typedef struct
     int MAX_CONN;
     int PORT;
     sbuffer_t *sbuffer;
+    pthread_mutex_t* mutex;
 } connmgrdata;
 
 void *read_thread(void* arg)
@@ -25,7 +27,7 @@ void *read_thread(void* arg)
     printf("read_thread: conn_counter = %d\n", conn_counter);
     threadData* tdata = (threadData*)arg;
     tcpsock_t *client = tdata->client;
-    tcpsock_t *server = tdata->server;
+    // tcpsock_t *server = tdata->server;
     sbuffer_t *sbuffer = tdata->sbuffer;
     sensor_data_t data;
     int bytes, result;
@@ -43,11 +45,13 @@ void *read_thread(void* arg)
             printf("sensor id = %" PRIu16 " - temperature = %g - timestamp = %ld\n", data.id, data.value,
                    (long int) data.ts);
             sensor_data_t *new_data = (sensor_data_t *)malloc(sizeof(sensor_data_t));
-    		new_data->id = data.id;
-    		new_data->ts = (long int) data.ts;
-    		new_data->value = data.value;
+            new_data->id = data.id;
+            new_data->ts = (long int) data.ts;
+            new_data->value = data.value;
             new_data->canberemoved = 0;
+            pthread_mutex_lock(&mutex);
     		printf("Insert final data: %s \n",!sbuffer_insert(sbuffer,new_data)? "Success":"Fail");
+            pthread_mutex_unlock(&mutex);
         }
     } while (result == TCP_NO_ERROR);
     if (result == TCP_CONNECTION_CLOSED)
@@ -55,6 +59,7 @@ void *read_thread(void* arg)
     else
         printf("Error occured on connection to peer\n");
     tcp_close(&client);
+    return NULL;
 }
 
 void *run_connmgr(void *arg){
@@ -88,4 +93,6 @@ void *run_connmgr(void *arg){
     complete_transfer = 1;
 
     printf("Test server is shutting down\n");
+
+    return NULL;
 }

@@ -1,15 +1,19 @@
 #include "datamgr.h"
+
+#include <pthread.h>
 #include <stdio.h>
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
 
+
 #include "lib/dplist.h"
 
 #define ROOM_SIZE 8
 
 extern int complete_transfer;
+extern pthread_mutex_t mutex;
 
 typedef struct
 {
@@ -23,6 +27,7 @@ typedef struct
 {
 	FILE *map;
 	sbuffer_t *sbuffer;
+	pthread_mutex_t* mutex;
 }datamgrData;
 
 static int running_count[8] = {-1};
@@ -83,7 +88,7 @@ void add_new_data(dplist_t* list, sensor_id_t sensor_id, double temperature, tim
 		case 132:
 			sensor_id_pro = 6;
 			break;
-		case 143:
+		case 142:
 			sensor_id_pro = 7;
 			break;
 		default:
@@ -98,7 +103,7 @@ void add_new_data(dplist_t* list, sensor_id_t sensor_id, double temperature, tim
 		while(counter<ROOM_SIZE){
 			my_element_t *current_element = dpl_get_element_at_index(list,counter);
 			if(current_element->sensor_id == sensor_id){
-					current_element->running_avg[running_count[sensor_id_pro]]= +temperature;
+					current_element->running_avg[running_count[sensor_id_pro]] = temperature;
 					current_element->last_modified = timestamp;
 					break;
 			}
@@ -111,6 +116,7 @@ void *datamgr_parse_sensor_files(void* arg){
 		datamgrData* tdata = (datamgrData*)arg;
 		FILE* fp_sensor_map= tdata->map;
 		sbuffer_t *sbuffer = tdata->sbuffer;
+
 
 		sensor_id_t sensor_id[ROOM_SIZE];
 		room_id_t room_id[ROOM_SIZE];
@@ -167,12 +173,14 @@ void *datamgr_parse_sensor_files(void* arg){
         		if (complete_transfer==1) break;
         		if(sbuffer_head(sbuffer)!=NULL){
         			sensor_data_t *data = (sensor_data_t *)malloc(sizeof(sensor_data_t));
+        			pthread_mutex_lock(&mutex);
         			int sbuffer_state = sbuffer_remove(sbuffer, data,DATA);
+        			pthread_mutex_unlock(&mutex);
         			if (sbuffer_state==SBUFFER_SUCCESS)
         			{
         				printf("DataManager Receive data is: %d - %ld - %f\n",data->id,data->ts,data->value);
+        				add_new_data(list, data->id, data->value, data->ts);
         			}
-
                 }
         }
 
@@ -189,6 +197,7 @@ void *datamgr_parse_sensor_files(void* arg){
 				counter++;
 		}
 	printf("Done");
+	return NULL;
 }
 
 void datamgr_free(void){

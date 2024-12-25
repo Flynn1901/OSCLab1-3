@@ -22,9 +22,9 @@ typedef struct
 
 typedef struct
 {
-  int MAX_CONN;
-  int PORT;
-  sbuffer_t *sbuffer;
+    int MAX_CONN;
+    int PORT;
+    sbuffer_t *sbuffer;
 } connmgrdata;
 
 typedef struct
@@ -43,6 +43,7 @@ int PORT;
 sbuffer_t *sbuffer;
 extern int conn_counter;
 int complete_transfer=0;
+pthread_mutex_t mutex;
 
 int main(int argc, char *argv[]) {
     //Configure the sensor number;
@@ -53,6 +54,11 @@ int main(int argc, char *argv[]) {
     MAX_CONN = atoi(argv[2]);
     PORT = atoi(argv[1]);
     FILE * map = fopen("room_sensor.map", "r");
+
+    if (pthread_mutex_init(&mutex, NULL) != 0) {
+        perror("Mutex init failed");
+        return 1;
+    }
 
     sbuffer= malloc(SBUFFER_SIZE);
     printf("%s",!sbuffer_init(&sbuffer)? "OK" : "ERROR");
@@ -65,12 +71,13 @@ int main(int argc, char *argv[]) {
     datamgrData datamgrdata = {map,sbuffer};
     pthread_create(&tid[1],&attr,datamgr_parse_sensor_files,(void*)&datamgrdata);
     stormgrData stormgrdata = {sbuffer};
-    pthread_create(&tid[1],&attr,stormgr,(void*)&stormgrdata);
+    pthread_create(&tid[2],&attr,stormgr,(void*)&stormgrdata);
 
 
     printf("Wait for thread close: Connection Magnager\n");
     pthread_join(tid[0],NULL);
     pthread_join(tid[1],NULL);
+    pthread_join(tid[2],NULL);
 
     printf("Close all threads\n");
 
