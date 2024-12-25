@@ -13,6 +13,12 @@
 #include "sbuffer.h"
 #include <time.h>
 
+#define SBUFFER_FAILURE -1
+#define SBUFFER_SUCCESS 0
+#define SBUFFER_NO_DATA 1
+#define SBUFFER_WAIT 2
+#define SBUFFER_READED 3
+
 #ifndef RUN_AVG_LENGTH
 #define RUN_AVG_LENGTH 5
 #endif

@@ -4,43 +4,35 @@
 
 #include "sensor_db.h"
 
-void *reader_thread(void* arg)
+#include <stdio.h>
+#include <stdlib.h>
+extern int complete_transfer;
+
+typedef struct
 {
-    printf("One thread start.\n");
+    sbuffer_t *sbuffer;
+}stormgrData;
 
-    if(file == NULL)
-    {
-        printf("Error opening file\n");
+void *stormgr(void* arg)
+{
+    FILE *file = fopen("data.csv", "w");
+    if (file == NULL) {
+        perror("Error opening file");
+        exit(EXIT_FAILURE);
     }
-
-    sensor_data_t *sensor_data = (sensor_data_t *)malloc(sizeof(sensor_data_t));
-
-
-    do
-    {
-        pthread_mutex_lock(&mutex);
-        sbuffer_remove(sbuffer, sensor_data);
-        pthread_mutex_unlock(&mutex);
-
-        if (read_complete==1)
-        {
-            printf("One thread closes.\n");
-            pthread_exit(NULL);
+    stormgrData* stormgrdata = (stormgrData*)arg;
+    sbuffer_t *sbuffer = stormgrdata->sbuffer;
+    while(1){
+        if (complete_transfer==1){break;}
+        if(sbuffer_head(sbuffer)!=NULL){
+            sensor_data_t *data = (sensor_data_t *)malloc(sizeof(sensor_data_t));
+            int sbuffer_state = sbuffer_remove(sbuffer, data,STORAGE);
+            if (sbuffer_state==SBUFFER_SUCCESS)
+            {
+                printf("StorageManager Receive data is: %d - %ld - %f\n",data->id,data->ts,data->value);\
+                fprintf(file, "%d  %ld  %f\n",data->id,data->ts,data->value);
+            }
         }
-
-        if ((sensor_data->id==0)&&(write_complete==0)){}
-        else if ((sensor_data->id==0)&&(write_complete==1)){
-            read_complete = 1;
-            fclose(file);
-            printf("One thread closes.\n");
-            sbuffer_free(&sbuffer);
-            pthread_exit(NULL);
-        }
-        else if (sensor_data->id!=0)
-        {
-            fprintf(file, "%d, %f, %ld\n",sensor_data->id,sensor_data->value, sensor_data->ts);
-            // printf("Reading sensor data %d %f %ld \n",sensor_data->id,sensor_data->value,sensor_data->ts);
-            usleep(25000);
-        }
-    }while (1);
+    }
+    fclose(file);
 }

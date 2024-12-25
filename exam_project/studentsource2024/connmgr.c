@@ -3,6 +3,7 @@
 //
 #include "connmgr.h"
 int conn_counter = 0;
+extern int complete_transfer;
 
 typedef struct
 {
@@ -83,6 +84,8 @@ void *run_connmgr(void *arg){
         pthread_join(tid[i],NULL);
     }
     if (tcp_close(&server) != TCP_NO_ERROR) exit(EXIT_FAILURE);
+    printf("Complete TCP transfer\n");
+    complete_transfer = 1;
 
     printf("Test server is shutting down\n");
 }

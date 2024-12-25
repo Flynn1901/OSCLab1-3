@@ -54,36 +54,26 @@ int sbuffer_remove(sbuffer_t *buffer, sensor_data_t *data,int source) {
     if (source==DATA)
     {
         *data = buffer->head->data;
-        if (data->canberemoved==1)
-        {
-            return SBUFFER_READED;
-        }
-        data->canberemoved = 1;//can be removed by storage manager;
+        if (data->canberemoved==1)  return SBUFFER_READED;
+        printf("Data manager read the data, and change the bit to 1\n");
+        buffer->head->data.canberemoved = 1;//can be removed by storage manager;
         return SBUFFER_SUCCESS;
     }
+    *data = buffer->head->data;
+    dummy = buffer->head;
+    if (data->canberemoved==0)  return SBUFFER_WAIT;
 
-    else
+
+    if (buffer->head == buffer->tail) // buffer has only one node
     {
-        *data = buffer->head->data;
-        dummy = buffer->head;
-        if (data->canberemoved==0)
-        {
-            return SBUFFER_WAIT;
-        }
-
-        if (buffer->head == buffer->tail) // buffer has only one node
-        {
-            buffer->head = buffer->tail = NULL;
-        } else  // buffer has many nodes empty
-        {
-            buffer->head = buffer->head->next;
-        }
-        free(dummy);
-        return SBUFFER_SUCCESS;
+        buffer->head = buffer->tail = NULL;
+    } else  // buffer has many nodes empty
+    {
+        buffer->head = buffer->head->next;
     }
-
-
-}
+    free(dummy);
+    return SBUFFER_SUCCESS;
+    }
 
 int sbuffer_insert(sbuffer_t *buffer, sensor_data_t *data) {
     sbuffer_node_t *dummy;

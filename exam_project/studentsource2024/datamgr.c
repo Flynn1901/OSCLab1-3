@@ -9,6 +9,8 @@
 
 #define ROOM_SIZE 8
 
+extern int complete_transfer;
+
 typedef struct
 {
         sensor_id_t sensor_id;
@@ -162,12 +164,16 @@ void *datamgr_parse_sensor_files(void* arg){
 		printf("Size of timestamp is %zu\n",sizeof(time_t));
 
         while(1){
+        		if (complete_transfer==1) break;
         		if(sbuffer_head(sbuffer)!=NULL){
         			sensor_data_t *data = (sensor_data_t *)malloc(sizeof(sensor_data_t));
         			int sbuffer_state = sbuffer_remove(sbuffer, data,DATA);
-        			printf("Sbuffer state is: %d",sbuffer_state);
+        			if (sbuffer_state==SBUFFER_SUCCESS)
+        			{
+        				printf("DataManager Receive data is: %d - %ld - %f\n",data->id,data->ts,data->value);
+        			}
+
                 }
-				nanosleep(100);
         }
 
 

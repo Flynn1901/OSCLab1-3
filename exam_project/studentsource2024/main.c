@@ -9,6 +9,7 @@
 #include "lib/tcpsock.h"
 #include "connmgr.h"
 #include "datamgr.h"
+#include "sensor_db.h"
 
 #define ERROR (-1)
 #define SBUFFER_SIZE 16
@@ -32,10 +33,16 @@ typedef struct
     sbuffer_t *sbuffer;
 }datamgrData;
 
+typedef struct
+{
+    sbuffer_t *sbuffer;
+}stormgrData;
+
 int MAX_CONN;
 int PORT;
 sbuffer_t *sbuffer;
 extern int conn_counter;
+int complete_transfer=0;
 
 int main(int argc, char *argv[]) {
     //Configure the sensor number;
@@ -57,6 +64,9 @@ int main(int argc, char *argv[]) {
 	pthread_create(&tid[0],&attr,run_connmgr,(void*)&connmgrdata1);
     datamgrData datamgrdata = {map,sbuffer};
     pthread_create(&tid[1],&attr,datamgr_parse_sensor_files,(void*)&datamgrdata);
+    stormgrData stormgrdata = {sbuffer};
+    pthread_create(&tid[1],&attr,stormgr,(void*)&stormgrdata);
+
 
     printf("Wait for thread close: Connection Magnager\n");
     pthread_join(tid[0],NULL);
