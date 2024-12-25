@@ -7,9 +7,12 @@
 
 #include "config.h"
 
+
 #define SBUFFER_FAILURE -1
 #define SBUFFER_SUCCESS 0
 #define SBUFFER_NO_DATA 1
+#define SBUFFER_WAIT 2
+#define SBUFFER_READED 3
 
 typedef struct sbuffer sbuffer_t;
 typedef struct sbuffer_node sbuffer_node_t;

@@ -2,8 +2,9 @@ TITLE_COLOR = \033[33m
 NO_COLOR = \033[0m
 
 
-runnew: main.c sbuffer.c
-	gcc -W -g main.c sbuffer.c lib/tcpsock.c connmgr.c -o a.out
+runnew: main.c sbuffer.c datamgr.c lib/dplist.c
+	gcc -W -g main.c sbuffer.c lib/tcpsock.c lib/dplist.c connmgr.c datamgr.c -o a.out
+	./a.out 5678 3
 
 # when executing make, compile all exe's
 all: sensor_gateway sensor_node file_creator

@@ -19,7 +19,7 @@ typedef struct {
     int canberemoved;
 } sensor_data_t;
 
-#define DATA 0;
-#define STORAGE 1;
+#define DATA 0
+#define STORAGE 1
 
 #endif /* _CONFIG_H_ */

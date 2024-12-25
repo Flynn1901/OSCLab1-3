@@ -3,6 +3,9 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
+
+#include "lib/dplist.h"
 
 #define ROOM_SIZE 8
 
@@ -13,6 +16,12 @@ typedef struct
         double running_avg[5];
         time_t last_modified;
 }my_element_t;
+
+typedef struct
+{
+	FILE *map;
+	sbuffer_t *sbuffer;
+}datamgrData;
 
 static int running_count[8] = {-1};
 static dplist_t *list = NULL;
@@ -96,7 +105,11 @@ void add_new_data(dplist_t* list, sensor_id_t sensor_id, double temperature, tim
 }
 
 
-void datamgr_parse_sensor_files(FILE *fp_sensor_map,sbuffer_t *sbuffer){
+void *datamgr_parse_sensor_files(void* arg){
+		datamgrData* tdata = (datamgrData*)arg;
+		FILE* fp_sensor_map= tdata->map;
+		sbuffer_t *sbuffer = tdata->sbuffer;
+
 		sensor_id_t sensor_id[ROOM_SIZE];
 		room_id_t room_id[ROOM_SIZE];
 		int room_id_turn = 1;
@@ -148,57 +161,17 @@ void datamgr_parse_sensor_files(FILE *fp_sensor_map,sbuffer_t *sbuffer){
 		printf("Size of temperature is %zu\n",sizeof(double));
 		printf("Size of timestamp is %zu\n",sizeof(time_t));
 
-		uint16_t sensor_id_new = 0;
-		double temperature = 0;
-		time_t timestamp = 0;
-
-
-		long total_byte = 0;
-		int running_count = 0;
-
         while(1){
         		if(sbuffer_head(sbuffer)!=NULL){
-
-
+        			sensor_data_t *data = (sensor_data_t *)malloc(sizeof(sensor_data_t));
+        			int sbuffer_state = sbuffer_remove(sbuffer, data,DATA);
+        			printf("Sbuffer state is: %d",sbuffer_state);
                 }
+				nanosleep(100);
         }
 
 
-		while(total_byte<fileSize)
-		{
-				switch(counter){
-						case 0:
-								//read sensor_id 2 byte
-								bytesRead = fread(&sensor_id_new, 2, 1, fp_sensor_data);
-    	    					// 打印读取到的 16 位数据，十六进制输出
-        						printf("Read Sensor id is: %d    ", sensor_id_new);
-								counter = 1;
-								total_byte+=2;
-								break;
-						case 1:
-								//read temperature进行
-								bytesRead = fread(&temperature, 8, 1, fp_sensor_data);
-    	    					// 打印读取到的8byte数据
-        						printf("Read temperature is: %f    ",temperature);
-								counter = 2;
-								total_byte+=8;
-								break;
-						case 2:
-								//read time stamp
-								bytesRead = fread(&timestamp, 8, 1, fp_sensor_data);
-    	    					// 打印读取到的8byte数据
-        						printf("Read time stampis: %ld\n", timestamp);
-								counter = 0;
-								total_byte+=8;
-								break;
-						default:
-								break;
-				}
-				if(counter==0)
-				{
-					add_new_data(list,sensor_id_new,temperature,timestamp);
-				}
-		}
+
 // print the final data
 		counter = 0;
 		while(counter<ROOM_SIZE){

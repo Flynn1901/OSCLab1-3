@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include "sbuffer.h"
 
+
 /**
  * basic node for the buffer, these nodes are linked together to create the buffer
  */
@@ -50,17 +51,38 @@ int sbuffer_remove(sbuffer_t *buffer, sensor_data_t *data,int source) {
     sbuffer_node_t *dummy;
     if (buffer == NULL) return SBUFFER_FAILURE;
     if (buffer->head == NULL) return SBUFFER_NO_DATA;
-    *data = buffer->head->data;
-    dummy = buffer->head;
-    if (buffer->head == buffer->tail) // buffer has only one node
+    if (source==DATA)
     {
-        buffer->head = buffer->tail = NULL;
-    } else  // buffer has many nodes empty
-    {
-        buffer->head = buffer->head->next;
+        *data = buffer->head->data;
+        if (data->canberemoved==1)
+        {
+            return SBUFFER_READED;
+        }
+        data->canberemoved = 1;//can be removed by storage manager;
+        return SBUFFER_SUCCESS;
     }
-    free(dummy);
-    return SBUFFER_SUCCESS;
+
+    else
+    {
+        *data = buffer->head->data;
+        dummy = buffer->head;
+        if (data->canberemoved==0)
+        {
+            return SBUFFER_WAIT;
+        }
+
+        if (buffer->head == buffer->tail) // buffer has only one node
+        {
+            buffer->head = buffer->tail = NULL;
+        } else  // buffer has many nodes empty
+        {
+            buffer->head = buffer->head->next;
+        }
+        free(dummy);
+        return SBUFFER_SUCCESS;
+    }
+
+
 }
 
 int sbuffer_insert(sbuffer_t *buffer, sensor_data_t *data) {

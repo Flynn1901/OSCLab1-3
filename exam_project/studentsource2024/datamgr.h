@@ -11,6 +11,7 @@
 #include <assert.h>
 #include "lib/dplist.h"
 #include "sbuffer.h"
+#include <time.h>
 
 #ifndef RUN_AVG_LENGTH
 #define RUN_AVG_LENGTH 5
@@ -42,7 +43,7 @@
  *  \param fp_sensor_map file pointer to the map file
  *  \param fp_sensor_data file pointer to the binary data file
  */
-void datamgr_parse_sensor_files(FILE *fp_sensor_map, sbuffer_t *);
+void *datamgr_parse_sensor_files(void* arg);
 
 /**
  * This method should be called to clean up the datamgr, and to free all used memory.

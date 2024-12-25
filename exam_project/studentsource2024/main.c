@@ -8,6 +8,7 @@
 #include "config.h"
 #include "lib/tcpsock.h"
 #include "connmgr.h"
+#include "datamgr.h"
 
 #define ERROR (-1)
 #define SBUFFER_SIZE 16
@@ -25,6 +26,12 @@ typedef struct
   sbuffer_t *sbuffer;
 } connmgrdata;
 
+typedef struct
+{
+    FILE *map;
+    sbuffer_t *sbuffer;
+}datamgrData;
+
 int MAX_CONN;
 int PORT;
 sbuffer_t *sbuffer;
@@ -38,6 +45,7 @@ int main(int argc, char *argv[]) {
     }
     MAX_CONN = atoi(argv[2]);
     PORT = atoi(argv[1]);
+    FILE * map = fopen("room_sensor.map", "r");
 
     sbuffer= malloc(SBUFFER_SIZE);
     printf("%s",!sbuffer_init(&sbuffer)? "OK" : "ERROR");
@@ -45,11 +53,14 @@ int main(int argc, char *argv[]) {
     pthread_t tid[3];
     pthread_attr_t attr;
     pthread_attr_init(&attr);
-    connmgrdata connmgrdata = {MAX_CONN,PORT,sbuffer};
-	pthread_create(&tid[0],&attr,run_connmgr,(void*)&connmgrdata);
+    connmgrdata connmgrdata1 = {MAX_CONN,PORT,sbuffer};
+	pthread_create(&tid[0],&attr,run_connmgr,(void*)&connmgrdata1);
+    datamgrData datamgrdata = {map,sbuffer};
+    pthread_create(&tid[1],&attr,datamgr_parse_sensor_files,(void*)&datamgrdata);
 
     printf("Wait for thread close: Connection Magnager\n");
     pthread_join(tid[0],NULL);
+    pthread_join(tid[1],NULL);
 
     printf("Close all threads\n");
 
