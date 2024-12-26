@@ -41,7 +41,6 @@ typedef struct
 int MAX_CONN;
 int PORT;
 sbuffer_t *sbuffer;
-extern int conn_counter;
 int complete_transfer=0;
 pthread_mutex_t mutex;
 

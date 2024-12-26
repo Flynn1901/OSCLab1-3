@@ -2,14 +2,12 @@
 // Created by flynn on 24-12-24.
 //
 #include "connmgr.h"
-int conn_counter = 0;
 extern int complete_transfer;
 extern pthread_mutex_t mutex;
 
 typedef struct
 {
     tcpsock_t *client;
-    tcpsock_t *server;
     sbuffer_t *sbuffer;
 } threadData;
 
@@ -24,10 +22,8 @@ typedef struct
 void *read_thread(void* arg)
 {
     printf("Incoming client connection\n");
-    printf("read_thread: conn_counter = %d\n", conn_counter);
     threadData* tdata = (threadData*)arg;
     tcpsock_t *client = tdata->client;
-    // tcpsock_t *server = tdata->server;
     sbuffer_t *sbuffer = tdata->sbuffer;
     sensor_data_t data;
     int bytes, result;
@@ -42,7 +38,7 @@ void *read_thread(void* arg)
         bytes = sizeof(data.ts);
         result = tcp_receive(client, (void *) &data.ts, &bytes);
         if ((result == TCP_NO_ERROR) && bytes) {
-            printf("sensor id = %" PRIu16 " - temperature = %g - timestamp = %ld\n", data.id, data.value,
+            printf("Connection Manager: sensor id = %" PRIu16 " - temperature = %g - timestamp = %ld\n", data.id, data.value,
                    (long int) data.ts);
             sensor_data_t *new_data = (sensor_data_t *)malloc(sizeof(sensor_data_t));
             new_data->id = data.id;
@@ -63,6 +59,7 @@ void *read_thread(void* arg)
 }
 
 void *run_connmgr(void *arg){
+
     printf("Connection manager is started\n");
     tcpsock_t *server, *client;
     connmgrdata* Data = (connmgrdata*)arg;
@@ -76,17 +73,37 @@ void *run_connmgr(void *arg){
 
     printf("Test server is started\n");
     if (tcp_passive_open(&server, PORT) != TCP_NO_ERROR) exit(EXIT_FAILURE);
-    do {
-        if (tcp_wait_for_connection(server, &client) != TCP_NO_ERROR) exit(EXIT_FAILURE);
-        threadData data = {client,server,sbuffer};
-        pthread_create(&tid[conn_counter],&attr,read_thread,(void*)&data);
-        conn_counter++;
-    } while (conn_counter < MAX_CONN);
+    int conn_counter1 = 0;
+    while (conn_counter1 < MAX_CONN)
+    {
+        if (tcp_wait_for_connection(server, &client) != TCP_NO_ERROR) {
+            fprintf(stderr,"Error: tcp_wait_for_connection() failed.\n");
+            tcp_close(&server);
+            exit(EXIT_FAILURE);
+        }
+        threadData* data = malloc(sizeof(threadData));
+        if (!data) {
+            fprintf(stderr, "Error: Failed to allocate memory for threadData.\n");
+            tcp_close(&client);
+            continue;
+        }
+        data->client = client;
+        data->sbuffer = sbuffer;
+        printf("read_thread: conn_counter = %d\n", conn_counter1);
+        if (pthread_create(&tid[conn_counter1], NULL , read_thread, (void*)data) != 0) {
+            perror("Failed to create thread");
+            tcp_close(&client);
+            free(data);
+            continue;
+        }
+        conn_counter1++;
+    }
 
-    for (int i = 0; i < conn_counter; i++)
+    for (int i = 0; i < conn_counter1; i++)
     {
         printf("Wait for thread close: thread %d\n",i);
         pthread_join(tid[i],NULL);
+        printf("Thread %d close",i);
     }
     if (tcp_close(&server) != TCP_NO_ERROR) exit(EXIT_FAILURE);
     printf("Complete TCP transfer\n");

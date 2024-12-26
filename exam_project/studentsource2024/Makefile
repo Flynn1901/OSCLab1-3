@@ -4,7 +4,7 @@ NO_COLOR = \033[0m
 
 runnew: main.c sbuffer.c datamgr.c lib/dplist.c sensor_db.c
 	gcc -W -g main.c sbuffer.c lib/tcpsock.c lib/dplist.c connmgr.c datamgr.c sensor_db.c -o a.out
-	./a.out 5678 3
+	./a.out 5678 5
 
 # when executing make, compile all exe's
 all: sensor_gateway sensor_node file_creator

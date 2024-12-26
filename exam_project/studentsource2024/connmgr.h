@@ -12,7 +12,9 @@
 #include "config.h"
 #include <inttypes.h>
 #include "sbuffer.h"
+#include <time.h>
 
 void *run_connmgr(void*);
 void *read_thread(void*);
+void delay(int a);
 #endif //CONNMGR_H

@@ -59,6 +59,8 @@ int sbuffer_remove(sbuffer_t *buffer, sensor_data_t *data,int source) {
         buffer->head->data.canberemoved = 1;//can be removed by storage manager;
         return SBUFFER_SUCCESS;
     }
+
+
     *data = buffer->head->data;
     dummy = buffer->head;
     if (data->canberemoved==0)  return SBUFFER_WAIT;
