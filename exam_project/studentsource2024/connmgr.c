@@ -52,7 +52,7 @@ void *read_thread(void* arg)
         if (startconnect_or_not == 0)//Connection for first time
         {
             char message2[SIZE];
-            snprintf(message2, SIZE, "Sensor node %d has opened a new connection\n",sensor_id);
+            snprintf(message2, SIZE, "Sensor node %d has opened a new connection",sensor_id);
             write(fd[WRITE_END], message2, strlen(message2)+1);
             startconnect_or_not = 1;
         }
@@ -73,7 +73,7 @@ void *read_thread(void* arg)
     {
         printf("Peer has closed connection\n");
         char message2[SIZE];
-        snprintf(message2, SIZE, "Sensor node %d has closed the connection\n",sensor_id);
+        snprintf(message2, SIZE, "Sensor node %d has closed the connection",sensor_id);
         write(fd[WRITE_END], message2, strlen(message2)+1);
     }
 

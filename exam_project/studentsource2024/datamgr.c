@@ -6,11 +6,15 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <unistd.h>
 
 
 #include "lib/dplist.h"
 
 #define ROOM_SIZE 8
+#define SIZE 201
+#define READ_END 0
+#define WRITE_END 1
 
 extern int complete_transfer;
 extern pthread_mutex_t mutex;
@@ -94,6 +98,9 @@ void add_new_data(dplist_t* list, sensor_id_t sensor_id, double temperature, tim
 			sensor_id_pro = 7;
 			break;
 		default:
+			char message2[SIZE];
+			snprintf(message2, SIZE, " Received sensor data with invalid sensor node ID %d",sensor_id);
+			write(fd[WRITE_END], message2, strlen(message2)+1);
 			break;
 		}
 
@@ -107,6 +114,30 @@ void add_new_data(dplist_t* list, sensor_id_t sensor_id, double temperature, tim
 			if(current_element->sensor_id == sensor_id){
 					current_element->running_avg[running_count[sensor_id_pro]] = temperature;
 					current_element->last_modified = timestamp;
+					double running_avg = 0;
+					int counter2 = 0;
+					for (int i=0;i<5;i++)
+					{
+						if (current_element->running_avg[i]!=0)
+						{
+							running_avg += current_element->running_avg[i];
+							counter2++;
+						}
+
+					}
+					running_avg = running_avg/counter2;
+					if (running_avg>SET_MAX_TEMP)
+					{
+						char message2[SIZE];
+						snprintf(message2, SIZE, "Sensor node %d reports it's too hot (avg temp = %f)",sensor_id,running_avg);
+						write(fd[WRITE_END], message2, strlen(message2)+1);
+					}
+					if (running_avg<SET_MIN_TEMP)
+					{
+						char message2[SIZE];
+						snprintf(message2, SIZE, "Sensor node %d reports it's too cold (avg temp = %f",sensor_id,running_avg);
+						write(fd[WRITE_END], message2, strlen(message2)+1);
+					}
 					break;
 			}
 			counter++;

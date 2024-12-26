@@ -25,7 +25,7 @@ void *stormgr(void* arg)
 {
     FILE *file = fopen("data.csv", "w");
     char message2[SIZE];
-    snprintf(message2, SIZE, "A new data.csv file has been created\n");
+    snprintf(message2, SIZE, "A new data.csv file has been created");
     write(fd[WRITE_END], message2, strlen(message2)+1);
     if (file == NULL) {
         perror("Error opening file");
@@ -45,14 +45,14 @@ void *stormgr(void* arg)
                 printf("StorageManager Receive data is: %d - %ld - %f\n\n\n\n\n",data->id,data->ts,data->value);\
                 fprintf(file, "%d  %ld  %f\n",data->id,data->ts,data->value);
                 char message4[SIZE];
-                snprintf(message4, SIZE, "Data insertion from sensor %d succeeded\n",data->id);
+                snprintf(message4, SIZE, "Data insertion from sensor %d succeeded",data->id);
                 write(fd[WRITE_END], message4, strlen(message4)+1);
             }
         }
     }
     fclose(file);
     char message3[SIZE];
-    snprintf(message3, SIZE, "A new data.csv file has been closed\n");
+    snprintf(message3, SIZE, "A new data.csv file has been closed");
     write(fd[WRITE_END], message3, strlen(message3)+1);
 
     return NULL;
