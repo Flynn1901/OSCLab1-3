@@ -1,14 +1,6 @@
 TITLE_COLOR = \033[33m
 NO_COLOR = \033[0m
 
-
-runnew: main.c sbuffer.c datamgr.c lib/dplist.c sensor_db.c
-	gcc -W -g main.c sbuffer.c lib/tcpsock.c lib/dplist.c connmgr.c datamgr.c sensor_db.c -o a.out
-	./a.out 5678 5
-
-gate:
-	./sensor_gateway 5678 5
-
 # when executing make, compile all exe's
 all: sensor_gateway sensor_node file_creator
 
@@ -70,6 +62,10 @@ clean-all: clean
 
 run : sensor_gateway sensor_node
 	@echo "Add your own implementation here..."
+	./sensor_gateway 5678 3
+	./sensor_node 15 1 127.0.0.1
+	./sensor_node 21 2 127.0.0.1
+	./sensor_node 37 3 127.0.0.1
 
 zip:
 	zip lab_final.zip main.c connmgr.c connmgr.h datamgr.c datamgr.h sbuffer.c sbuffer.h sensor_db.c sensor_db.h config.h lib/dplist.c lib/dplist.h lib/tcpsock.c lib/tcpsock.h Makefile

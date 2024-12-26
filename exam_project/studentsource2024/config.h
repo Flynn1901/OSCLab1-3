@@ -7,6 +7,8 @@
 
 #include <stdint.h>
 #include <time.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 typedef uint16_t sensor_id_t,room_id_t;
 typedef double sensor_value_t;

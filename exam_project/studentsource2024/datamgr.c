@@ -19,6 +19,7 @@ extern int complete_transfer;
 extern pthread_mutex_t mutex;
 extern pthread_mutex_t mutex_log;
 extern int MAX_CONN;
+int total_sensor_num;
 
 typedef struct
 {
@@ -73,7 +74,7 @@ void add_new_data(dplist_t* list, sensor_id_t sensor_id, double temperature, tim
 		int counter = 0;
 		int find_or_not = 0;
 
-		while(counter<MAX_CONN){
+		while(counter<total_sensor_num){
 			my_element_t *current_element = dpl_get_element_at_index(list,counter);
 			if(current_element->sensor_id == sensor_id){
 					find_or_not = 1;
@@ -134,19 +135,33 @@ void *datamgr_parse_sensor_files(void* arg){
 		int room_id_turn = 1;
 		uint16_t value = 0;
 		uint8_t counter = 0;
-//read the sensor id and room id from the txt file
+//Count how many sensors are there in the map file.
 		while(fscanf(fp_sensor_map,"%hu",&value)==1){
 				if(room_id_turn==1){
-						printf("Room id is:%d    ",value);
-						room_id[counter] = value;
 						room_id_turn = 0;
 				}else{
-						printf("Sensor id is:%d\n",value);
-						sensor_id[counter] = value;
 						room_id_turn = 1;
 						counter++;
 				}
 		}
+	total_sensor_num = counter;
+	printf("total sensor num = %d\n",total_sensor_num);;
+
+	counter = 0;
+	fp_sensor_map = fopen("room_sensor.map", "r");
+	while(fscanf(fp_sensor_map,"%hu",&value)==1){
+		if(room_id_turn==1){
+			printf("Room id is:%d    ",value);
+			room_id[counter] = value;
+			room_id_turn = 0;
+		}else{
+			printf("Sensor id is:%d\n",value);
+			sensor_id[counter] = value;
+			room_id_turn = 1;
+			counter++;
+		}
+	}
+
 
 //using sensor id and room id to do the basic configuration of linked list
 		dpl_free(&list,false);
@@ -154,7 +169,7 @@ void *datamgr_parse_sensor_files(void* arg){
 		my_element_t *content = (my_element_t *)malloc(sizeof(my_element_t));
 //write sensor and room id to linked list.
 		counter = 0;
-		while(counter<MAX_CONN){
+		while(counter<total_sensor_num){
 				content->sensor_id = sensor_id[counter];
 				content->room_id = room_id[counter];
 				content->last_modified = 0;
@@ -163,7 +178,7 @@ void *datamgr_parse_sensor_files(void* arg){
 				counter++;
 		}
 		counter = 0;
-		while(counter<MAX_CONN){
+		while(counter<total_sensor_num){
 				my_element_t *current = dpl_get_element_at_index(list, counter);
 				printf("Room id is: %d    ",current->room_id);
 				printf("Sensor id is: %d   ",current->sensor_id);
@@ -194,12 +209,9 @@ void *datamgr_parse_sensor_files(void* arg){
         			}
                 }
         }
-
-
-
 // print the final data
 		counter = 0;
-		while(counter<MAX_CONN){
+		while(counter<total_sensor_num){
 				my_element_t *current = dpl_get_element_at_index(list, counter);
 				printf("Room id is: %d    ",current->room_id);
 				printf("Sensor id is: %d   ",current->sensor_id);

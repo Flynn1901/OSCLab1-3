@@ -1,6 +1,6 @@
 make all
 port=5678
-clients=5
+clients=6
 echo -e "starting gateway "
 ./sensor_gateway $port $clients &
 sleep 3
@@ -14,7 +14,9 @@ echo -e 'starting 5 sensor nodes'
 ./sensor_node 132 3 127.0.0.1 $port &
 
 ./sensor_node 142 3 127.0.0.1 $port &
-sleep 30
+
+./sensor_node 112 2 127.0.0.1 $port &
+sleep 11
 killall sensor_node
 sleep 30
 killall sensor_gateway

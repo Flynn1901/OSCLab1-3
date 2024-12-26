@@ -1,5 +1,5 @@
-#include <stdio.h>
-#include <stdlib.h>
+
+
 #include <unistd.h>
 #include <pthread.h>
 #include "sbuffer.h"
@@ -51,6 +51,7 @@ int complete_transfer=0;
 pthread_mutex_t mutex;
 pthread_mutex_t mutex_log;
 FILE* log_file=NULL;
+static int sequency = 0;
 
 int write_to_log_process(char *msg){
     for (int i=0; i<SIZE; i++)
@@ -65,9 +66,17 @@ int write_to_log_process(char *msg){
         return 0;
     }
 
+    time_t now = time(NULL);
+    char time_str[SIZE];
+    snprintf(time_str, SIZE, "%s",ctime(&now));
+    int len = strlen(time_str);
+    if (len>0)
+    {
+        time_str[len-1] = '\0';
+    }
     while (*msg != '\0') {
         size_t length = strlen(msg);
-        fprintf(log_file, "%.*s\n",  (int)length+1, msg);
+        fprintf(log_file, "%d - %s - %.*s\n",sequency++,time_str,(int)length+1, msg);
         fflush(log_file);
         msg += length + 1;
     }
