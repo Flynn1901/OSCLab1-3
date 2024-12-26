@@ -32,6 +32,8 @@ typedef struct
 
 static int running_count[8] = {-1};
 static dplist_t *list = NULL;
+extern pid_t pid;
+extern int fd[2];
 
 void *element_copy(void *element)
 {
@@ -146,7 +148,6 @@ void *datamgr_parse_sensor_files(void* arg){
 		while(counter<ROOM_SIZE){
 				content->sensor_id = sensor_id[counter];
 				content->room_id = room_id[counter];
-				// content->running_avg = {0,0,0,0,0};
 				content->last_modified = 0;
 				dpl_insert_at_index(list,content,counter,true);
 				counter++;

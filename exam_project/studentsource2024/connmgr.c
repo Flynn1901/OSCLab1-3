@@ -2,6 +2,12 @@
 // Created by flynn on 24-12-24.
 //
 #include "connmgr.h"
+
+#include <string.h>
+#include <unistd.h>
+#define SIZE 201
+#define READ_END 0
+#define WRITE_END 1
 extern int complete_transfer;
 extern pthread_mutex_t mutex;
 
@@ -19,6 +25,9 @@ typedef struct
     pthread_mutex_t* mutex;
 } connmgrdata;
 
+extern pid_t pid;
+extern int fd[2];
+
 void *read_thread(void* arg)
 {
     printf("Incoming client connection\n");
@@ -27,6 +36,8 @@ void *read_thread(void* arg)
     sbuffer_t *sbuffer = tdata->sbuffer;
     sensor_data_t data;
     int bytes, result;
+    int sensor_id=0;
+    int startconnect_or_not = 0;
     do {
         // read sensor ID
         bytes = sizeof(data.id);
@@ -37,6 +48,14 @@ void *read_thread(void* arg)
         // read timestamp
         bytes = sizeof(data.ts);
         result = tcp_receive(client, (void *) &data.ts, &bytes);
+        sensor_id = data.id;
+        if (startconnect_or_not == 0)//Connection for first time
+        {
+            char message2[SIZE];
+            snprintf(message2, SIZE, "Sensor node %d has opened a new connection\n",sensor_id);
+            write(fd[WRITE_END], message2, strlen(message2)+1);
+            startconnect_or_not = 1;
+        }
         if ((result == TCP_NO_ERROR) && bytes) {
             printf("Connection Manager: sensor id = %" PRIu16 " - temperature = %g - timestamp = %ld\n", data.id, data.value,
                    (long int) data.ts);
@@ -51,7 +70,13 @@ void *read_thread(void* arg)
         }
     } while (result == TCP_NO_ERROR);
     if (result == TCP_CONNECTION_CLOSED)
+    {
         printf("Peer has closed connection\n");
+        char message2[SIZE];
+        snprintf(message2, SIZE, "Sensor node %d has closed the connection\n",sensor_id);
+        write(fd[WRITE_END], message2, strlen(message2)+1);
+    }
+
     else
         printf("Error occured on connection to peer\n");
     tcp_close(&client);
