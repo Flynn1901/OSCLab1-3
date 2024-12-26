@@ -118,12 +118,8 @@ int main(int argc, char *argv[]) {
         char buffer[SIZE];
         memset(buffer, 0, SIZE);
 
-        while (1)
+        while (read(fd[READ_END],buffer,SIZE-1))
         {
-            pthread_mutex_lock(&mutex_log);
-            long int flag = read(fd[READ_END],buffer,SIZE-1);
-            pthread_mutex_unlock(&mutex_log);
-            if (flag==ERROR){ break; }
             write_to_log_process(buffer); // 写日志
             memset(buffer, 0, SIZE);
         }
