@@ -12,6 +12,7 @@
 
 extern int complete_transfer;
 extern pthread_mutex_t mutex;
+extern pthread_mutex_t mutex_log;
 extern pid_t pid;
 extern int fd[2];
 
@@ -26,7 +27,9 @@ void *stormgr(void* arg)
     FILE *file = fopen("data.csv", "w");
     char message2[SIZE];
     snprintf(message2, SIZE, "A new data.csv file has been created");
+    pthread_mutex_lock(&mutex_log);
     write(fd[WRITE_END], message2, strlen(message2)+1);
+    pthread_mutex_unlock(&mutex_log);
     if (file == NULL) {
         perror("Error opening file");
         exit(EXIT_FAILURE);
@@ -46,14 +49,18 @@ void *stormgr(void* arg)
                 fprintf(file, "%d  %ld  %f\n",data->id,data->ts,data->value);
                 char message4[SIZE];
                 snprintf(message4, SIZE, "Data insertion from sensor %d succeeded",data->id);
+                pthread_mutex_lock(&mutex_log);
                 write(fd[WRITE_END], message4, strlen(message4)+1);
+                pthread_mutex_unlock(&mutex_log);
             }
         }
     }
     fclose(file);
     char message3[SIZE];
     snprintf(message3, SIZE, "A new data.csv file has been closed");
+    pthread_mutex_lock(&mutex_log);
     write(fd[WRITE_END], message3, strlen(message3)+1);
+    pthread_mutex_unlock(&mutex_log);
 
     return NULL;
 }

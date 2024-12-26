@@ -10,6 +10,7 @@
 #define WRITE_END 1
 extern int complete_transfer;
 extern pthread_mutex_t mutex;
+extern pthread_mutex_t mutex_log;
 
 typedef struct
 {
@@ -30,7 +31,6 @@ extern int fd[2];
 
 void *read_thread(void* arg)
 {
-    time_t tcp_transfer = time(NULL);
     printf("Incoming client connection\n");
     threadData* tdata = (threadData*)arg;
     tcpsock_t *client = tdata->client;
@@ -43,33 +43,29 @@ void *read_thread(void* arg)
         // read sensor ID
         bytes = sizeof(data.id);
         result = tcp_receive(client, (void *) &data.id, &bytes);
+        if (result!=TCP_NO_ERROR) break;
+
         // read temperature
         bytes = sizeof(data.value);
         result = tcp_receive(client, (void *) &data.value, &bytes);
+        if (result!=TCP_NO_ERROR) break;
+
         // read timestamp
         bytes = sizeof(data.ts);
         result = tcp_receive(client, (void *) &data.ts, &bytes);
+        if (result!=TCP_NO_ERROR) break;
+
         sensor_id = data.id;
-        printf("TCP_TRANSFER is %ld, Current time is %ld\n",tcp_transfer, time(NULL));
-        double difference = difftime(time(NULL), tcp_transfer);
-        printf("Difference is: %f\n",difference);
-        if (difference>5)
-        {
-            printf("Over time, It's time out!\n");
-            char message5[SIZE];
-            snprintf(message5, SIZE, "Sensor node %d is overtime",sensor_id);
-            write(fd[WRITE_END], message5, strlen(message5)+1);
-            break;
-        }
         if (startconnect_or_not == 0)//Connection for first time
         {
             char message2[SIZE];
             snprintf(message2, SIZE, "Sensor node %d has opened a new connection",sensor_id);
+            pthread_mutex_lock(&mutex_log);
             write(fd[WRITE_END], message2, strlen(message2)+1);
+            pthread_mutex_unlock(&mutex_log);
             startconnect_or_not = 1;
         }
         if ((result == TCP_NO_ERROR) && bytes) {
-            tcp_transfer = time(NULL);
             printf("Connection Manager: sensor id = %" PRIu16 " - temperature = %g - timestamp = %ld\n", data.id, data.value,
                    (long int) data.ts);
             sensor_data_t *new_data = (sensor_data_t *)malloc(sizeof(sensor_data_t));
@@ -87,7 +83,18 @@ void *read_thread(void* arg)
         printf("Peer has closed connection\n");
         char message2[SIZE];
         snprintf(message2, SIZE, "Sensor node %d has closed the connection",sensor_id);
+        pthread_mutex_lock(&mutex_log);
         write(fd[WRITE_END], message2, strlen(message2)+1);
+        pthread_mutex_unlock(&mutex_log);
+    }
+    else if (result==TCP_TIMEOUT)
+    {
+        printf("Sensor node %d over time\n",data.id);
+        char message2[SIZE];
+        snprintf(message2, SIZE, "Sensor node %d over time",data.id);
+        pthread_mutex_lock(&mutex_log);
+        write(fd[WRITE_END], message2, strlen(message2)+1);
+        pthread_mutex_unlock(&mutex_log);
     }
 
     else

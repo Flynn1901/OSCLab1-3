@@ -49,6 +49,7 @@ int PORT;
 sbuffer_t *sbuffer;
 int complete_transfer=0;
 pthread_mutex_t mutex;
+pthread_mutex_t mutex_log;
 FILE* log_file=NULL;
 
 int write_to_log_process(char *msg){
@@ -92,6 +93,11 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
+    if (pthread_mutex_init(&mutex_log, NULL) != 0) {
+        perror("Mutex_Log init failed");
+        return 1;
+    }
+
     sbuffer= malloc(SBUFFER_SIZE);
     printf("%s",!sbuffer_init(&sbuffer)? "OK" : "ERROR");
 
@@ -112,8 +118,12 @@ int main(int argc, char *argv[]) {
         char buffer[SIZE];
         memset(buffer, 0, SIZE);
 
-        while (read(fd[READ_END],buffer,SIZE-1))
+        while (1)
         {
+            pthread_mutex_lock(&mutex_log);
+            long int flag = read(fd[READ_END],buffer,SIZE-1);
+            pthread_mutex_unlock(&mutex_log);
+            if (flag==ERROR){ break; }
             write_to_log_process(buffer); // 写日志
             memset(buffer, 0, SIZE);
         }

@@ -11,8 +11,12 @@
 #include <string.h>
 #include <unistd.h>
 #include <errno.h>
+#include <time.h>
+
 
 #include "tcpsock.h"
+
+#include <stdio.h>
 
 //#define DEBUG
 
@@ -201,6 +205,7 @@ int tcp_send(tcpsock_t *socket, void *buffer, int *buf_size) {
 }
 
 int tcp_receive(tcpsock_t *socket, void *buffer, int *buf_size) {
+    struct timeval timeout;
     TCP_ERR_HANDLER(socket == NULL, return TCP_SOCKET_ERROR);
     TCP_ERR_HANDLER(socket->cookie != MAGIC_COOKIE, return TCP_SOCKET_ERROR);
     if ((buffer == NULL) || (buf_size == 0))  //nothing to read
@@ -208,7 +213,23 @@ int tcp_receive(tcpsock_t *socket, void *buffer, int *buf_size) {
         *buf_size = 0;
         return TCP_NO_ERROR;
     }
+
+    timeout.tv_sec = TIMEOUT;  // 秒
+    timeout.tv_usec = 0; // 微秒
+    if (setsockopt(socket->sd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout)) < 0) {
+        perror("setsockopt failed");
+        return TCP_SOCKOP_ERROR;
+    }
     *buf_size = recv(socket->sd, buffer, *buf_size, 0);
+    if (*buf_size < 0) {
+        if (errno == EAGAIN || errno == EWOULDBLOCK) {
+            printf("Receive timed out after 5 seconds\n. ");
+            return TCP_TIMEOUT;  // 假设定义了超时错误码 TCP_TIMEOUT
+        } else {
+            perror("recv failed");
+            return TCP_SOCKOP_ERROR;
+        }
+    }
     TCP_DEBUG_PRINTF(*buf_size == 0, "Recv() : no connection to peer\n");
     TCP_ERR_HANDLER(*buf_size == 0, return TCP_CONNECTION_CLOSED);
     TCP_DEBUG_PRINTF((*buf_size < 0) && (errno == ENOTCONN), "Recv() : no connection to peer\n");

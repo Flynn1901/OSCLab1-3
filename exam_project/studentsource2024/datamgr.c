@@ -18,6 +18,7 @@
 
 extern int complete_transfer;
 extern pthread_mutex_t mutex;
+extern pthread_mutex_t mutex_log;
 
 typedef struct
 {
@@ -100,7 +101,9 @@ void add_new_data(dplist_t* list, sensor_id_t sensor_id, double temperature, tim
 		default:
 			char message2[SIZE];
 			snprintf(message2, SIZE, " Received sensor data with invalid sensor node ID %d",sensor_id);
+			pthread_mutex_lock(&mutex_log);
 			write(fd[WRITE_END], message2, strlen(message2)+1);
+			pthread_mutex_unlock(&mutex_log);
 			break;
 		}
 
@@ -130,13 +133,17 @@ void add_new_data(dplist_t* list, sensor_id_t sensor_id, double temperature, tim
 					{
 						char message2[SIZE];
 						snprintf(message2, SIZE, "Sensor node %d reports it's too hot (avg temp = %f)",sensor_id,running_avg);
+						pthread_mutex_lock(&mutex_log);
 						write(fd[WRITE_END], message2, strlen(message2)+1);
+						pthread_mutex_unlock(&mutex_log);
 					}
 					if (running_avg<SET_MIN_TEMP)
 					{
 						char message2[SIZE];
 						snprintf(message2, SIZE, "Sensor node %d reports it's too cold (avg temp = %f",sensor_id,running_avg);
+						pthread_mutex_lock(&mutex_log);
 						write(fd[WRITE_END], message2, strlen(message2)+1);
+						pthread_mutex_unlock(&mutex_log);
 					}
 					break;
 			}
