@@ -169,5 +169,8 @@ int main(int argc, char *argv[]) {
     sbuffer_free(&sbuffer);
     pthread_mutex_destroy(&mutex);
     pthread_mutex_destroy(&mutex_log);
+
+
+
     return 0;
 }

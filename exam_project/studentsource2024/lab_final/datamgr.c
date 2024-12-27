@@ -220,12 +220,11 @@ void *datamgr_parse_sensor_files(void* arg){
 				counter++;
 		}
 	printf("Done");
-	datamgr_free(list);
 	return NULL;
 }
 
-void datamgr_free(dplist_t *list){
-	dpl_free(&list, true);
+void datamgr_free(void){
+
 }
 
 uint16_t datamgr_get_room_id(sensor_id_t sensor_id){

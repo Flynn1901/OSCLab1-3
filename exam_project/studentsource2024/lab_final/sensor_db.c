@@ -53,7 +53,6 @@ void *stormgr(void* arg)
                 write(fd[WRITE_END], message4, strlen(message4)+1);
                 pthread_mutex_unlock(&mutex_log);
             }
-            free(data);
         }
     }
     fclose(file);

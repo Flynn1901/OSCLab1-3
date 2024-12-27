@@ -97,7 +97,8 @@ void *read_thread(void* arg)
         pthread_mutex_unlock(&mutex_log);
     }
 
-    else printf("Error occured on connection to peer\n");
+    else
+        printf("Error occured on connection to peer\n");
     tcp_close(&client);
     return NULL;
 }
